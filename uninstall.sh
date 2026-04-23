@@ -43,37 +43,31 @@ done
 
 remove_shell_rc_export() {
   local shell_rc="$1"
-  local target_dir="$2"
-  local escaped line
 
   if [[ ! -f "$shell_rc" ]]; then
     echo "Shell rc not found, skipping: $shell_rc"
     return 0
   fi
 
-  line="export OPENCODE_CONFIG_DIR=\"$target_dir\""
-  escaped="$(printf '%s\n' "$line" | sed 's/[.[\*^$(){}+?|/]/\\&/g')"
-
-  if grep -q "^$escaped$" "$shell_rc"; then
-    python3 - "$shell_rc" "$line" <<'PY'
+  python3 - "$shell_rc" <<'PY'
 import pathlib
+import re
 import sys
 
 path = pathlib.Path(sys.argv[1])
-line = sys.argv[2]
 content = path.read_text(encoding="utf-8")
-lines = content.splitlines()
-new_lines = [item for item in lines if item.strip() != line]
+lines = content.splitlines(keepends=True)
+pattern = re.compile(r"^\s*export\s+OPENCODE_CONFIG_DIR\s*=", re.IGNORECASE)
+new_lines = [line for line in lines if not pattern.match(line)]
+removed = len(lines) - len(new_lines)
 
-if new_lines:
-    path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+if removed > 0:
+    rewritten = "".join(new_lines)
+    path.write_text(rewritten, encoding="utf-8")
+    print(f"Removed {removed} OPENCODE_CONFIG_DIR export line(s) from {path}")
 else:
-    path.write_text("", encoding="utf-8")
+    print(f"No OPENCODE_CONFIG_DIR export lines found in {path}")
 PY
-    echo "Removed OPENCODE_CONFIG_DIR export from $shell_rc"
-  else
-    echo "No matching OPENCODE_CONFIG_DIR export found in $shell_rc"
-  fi
 }
 
 remove_opencode_permissions() {
@@ -163,7 +157,7 @@ else
 fi
 
 if [[ "$REMOVE_RC" -eq 1 ]]; then
-  remove_shell_rc_export "$SHELL_RC" "$TARGET_DIR"
+  remove_shell_rc_export "$SHELL_RC"
 fi
 
 if [[ "$REMOVE_PERMISSIONS" -eq 1 ]]; then
@@ -172,3 +166,4 @@ fi
 
 echo
 echo "Uninstall complete."
+echo "If your current shell still has OPENCODE_CONFIG_DIR set, run: unset OPENCODE_CONFIG_DIR"
