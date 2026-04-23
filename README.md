@@ -31,8 +31,12 @@ git clone https://github.com/<your-user>/opencode-ralph-kit.git ~/projects-runni
 
 ```bash
 cd ~/projects-running/opencode-ralph-kit
-./install.sh
+./install.sh --write-shell-rc --write-opencode-permissions
 ```
+
+This writes:
+- `OPENCODE_CONFIG_DIR` export into your shell rc
+- OpenCode global permission allowlists so Ralph scripts and log reads do not keep prompting
 
 3) Add this once to your shell profile (`~/.zshrc` or `~/.bashrc`):
 
@@ -86,4 +90,5 @@ opencode .
 - `/ralph-budget` fails fast if no goal is provided.
 - `/ralph-status` is non-subtask so it can be run while `/ralph-budget` is in progress.
 - `/ralph-status` shows an active run hint using `.opencode-run-logs/<run>/run-state.env`.
+- If OpenCode repeatedly prompts for `scripts/` or log access, rerun installer with `--write-opencode-permissions`.
 - Use `/ralph-init` in a new project to scaffold local Ralph loop docs.
