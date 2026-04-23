@@ -86,6 +86,8 @@ opencode .
 ## Notes
 
 - Main logs are written inside the target repository under `.opencode-run-logs/`.
+- Active run state is stored at `.opencode-run-logs/<run>/run-state.env`.
+- Iteration transcripts are stored at `.opencode-run-logs/<run>/iter-*.log`.
 - `/ralph-budget` is configured as a subtask command to reduce main-thread context pollution.
 - `/ralph-budget` fails fast if no goal is provided.
 - `/ralph-status` is non-subtask so it can be run while `/ralph-budget` is in progress.
