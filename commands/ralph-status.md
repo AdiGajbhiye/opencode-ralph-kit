@@ -1,7 +1,7 @@
 ---
 description: Show recent Ralph loop logs
 agent: build
-subtask: true
+subtask: false
 ---
 Show recent Ralph loop log directories for the current repository.
 
@@ -13,4 +13,5 @@ Execution requirements:
 
 Return only:
 - the listed log paths
+- active run hint (when available)
 - one-line recommendation on which run to inspect next

@@ -84,4 +84,6 @@ opencode .
 - Main logs are written inside the target repository under `.opencode-run-logs/`.
 - `/ralph-budget` is configured as a subtask command to reduce main-thread context pollution.
 - `/ralph-budget` fails fast if no goal is provided.
+- `/ralph-status` is non-subtask so it can be run while `/ralph-budget` is in progress.
+- `/ralph-status` shows an active run hint using `.opencode-run-logs/<run>/run-state.env`.
 - Use `/ralph-init` in a new project to scaffold local Ralph loop docs.

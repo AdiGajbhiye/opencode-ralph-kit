@@ -21,7 +21,8 @@ Execution requirements:
   1) `$OPENCODE_CONFIG_DIR/scripts/run_ralph_loop_budget.sh`
   2) `~/.config/opencode-ralph/scripts/run_ralph_loop_budget.sh`
 - Pass all user arguments through to the script exactly.
-- Sanity cadence: every 3 iterations run sanity check and include findings in operator summary.
+- Sanity cadence: every 3 iterations, run `run_ralph_sanity.sh` directly (not `/ralph-sanity`) and include findings in operator summary.
+- Sanity checks are non-blocking for budget progression: if sanity execution is unavailable/fails, continue budget loop and report `sanity: skipped` with reason.
 - Keep output concise; do not paste full command logs.
 
 Return only:

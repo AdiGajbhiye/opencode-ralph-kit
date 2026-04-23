@@ -66,6 +66,35 @@ fi
 
 mkdir -p "$OPENCODE_LOOP_LOG_DIR"
 
+RUN_STATE_FILE="$OPENCODE_LOOP_LOG_DIR/run-state.env"
+RUN_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+CURRENT_ITER=0
+LAST_LOOP_STATUS=""
+RUN_PHASE="starting"
+
+write_run_state() {
+  local exit_code="${1:-}"
+
+  {
+    echo "pid=$$"
+    echo "started_at=$RUN_STARTED_AT"
+    echo "updated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "phase=$RUN_PHASE"
+    echo "max_iters=$MAX_ITERS"
+    echo "current_iter=$CURRENT_ITER"
+    echo "last_status=$LAST_LOOP_STATUS"
+    echo "log_dir=$OPENCODE_LOOP_LOG_DIR"
+    if [[ -n "${OPENCODE_LOOP_GOAL// }" ]]; then
+      echo "goal=$OPENCODE_LOOP_GOAL"
+    fi
+    if [[ -n "$exit_code" ]]; then
+      echo "exit_code=$exit_code"
+    fi
+  } >"$RUN_STATE_FILE"
+}
+
+write_run_state
+
 ALLOW_DIRTY_PATHS=()
 if [[ -n "$OPENCODE_LOOP_ALLOW_DIRTY_PATHS_RAW" ]]; then
   IFS=':' read -r -a ALLOW_DIRTY_PATHS <<< "$OPENCODE_LOOP_ALLOW_DIRTY_PATHS_RAW"
@@ -173,6 +202,8 @@ auto_stash_dirty_tree_if_needed() {
 on_exit() {
   local exit_code=$?
   set +e
+  RUN_PHASE="exited"
+  write_run_state "$exit_code"
   auto_stash_dirty_tree_if_needed "$exit_code"
 }
 trap on_exit EXIT
@@ -231,6 +262,9 @@ PROMPT_CONTENT="$(load_prompt)"
 
 for i in $(seq 1 "$MAX_ITERS"); do
   echo "=== Ralph iteration $i/$MAX_ITERS ==="
+  CURRENT_ITER="$i"
+  RUN_PHASE="running"
+  write_run_state
 
   if ! run_clean_tree_check "pre-iteration-$i" "$OPENCODE_LOOP_LOG_DIR/iter-$i-clean-pre.log"; then
     exit 6
@@ -263,21 +297,32 @@ for i in $(seq 1 "$MAX_ITERS"); do
 
   case "$status_line" in
     *"LOOP_STATUS: CONTINUE"*)
+      LAST_LOOP_STATUS="CONTINUE"
+      write_run_state
       run_validation "$i" "$OPENCODE_LOOP_LOG_DIR/iter-$i-validate.log" || exit 5
       run_clean_tree_check "post-iteration-$i" "$OPENCODE_LOOP_LOG_DIR/iter-$i-clean-post.log" || exit 6
       echo "Iteration $i complete: CONTINUE"
       ;;
     *"LOOP_STATUS: COMPLETE"*)
+      LAST_LOOP_STATUS="COMPLETE"
+      RUN_PHASE="completed"
+      write_run_state
       run_validation "$i" "$OPENCODE_LOOP_LOG_DIR/iter-$i-validate.log" || exit 5
       run_complete_clean_tree_check "$OPENCODE_LOOP_LOG_DIR/iter-$i-clean-complete.log" || exit 6
       echo "Loop completed at iteration $i"
       exit 0
       ;;
     *"LOOP_STATUS: BLOCKED"*)
+      LAST_LOOP_STATUS="BLOCKED"
+      RUN_PHASE="blocked"
+      write_run_state
       echo "Loop blocked at iteration $i"
       exit 2
       ;;
     *"LOOP_STATUS: FAIL"*)
+      LAST_LOOP_STATUS="FAIL"
+      RUN_PHASE="failed"
+      write_run_state
       echo "Loop failed at iteration $i"
       exit 3
       ;;
@@ -289,4 +334,6 @@ for i in $(seq 1 "$MAX_ITERS"); do
 done
 
 echo "Reached max iterations ($MAX_ITERS) without terminal status"
+RUN_PHASE="maxed"
+write_run_state
 exit 0
