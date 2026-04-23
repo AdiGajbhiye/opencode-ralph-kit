@@ -19,6 +19,7 @@ Environment variables:
   OPENCODE_LOOP_ALLOW_DIRTY_ON_COMPLETE Allow dirty tree on COMPLETE: 1|0 (default: 0)
   OPENCODE_LOOP_AUTOSTASH_ON_EXIT      Auto-stash dirty tree on exit: 1|0 (default: 1)
   OPENCODE_LOOP_AUTOSTASH_INCLUDE_UNTRACKED Include untracked files in auto-stash: 1|0 (default: 1)
+  OPENCODE_LOOP_GOAL                   Optional run goal injected into each iteration prompt
 
 Exit codes:
   0  completed or max iterations reached
@@ -56,6 +57,7 @@ OPENCODE_LOOP_ALLOW_DIRTY_PATHS_RAW="${OPENCODE_LOOP_ALLOW_DIRTY_PATHS:-}"
 OPENCODE_LOOP_ALLOW_DIRTY_ON_COMPLETE="${OPENCODE_LOOP_ALLOW_DIRTY_ON_COMPLETE:-0}"
 OPENCODE_LOOP_AUTOSTASH_ON_EXIT="${OPENCODE_LOOP_AUTOSTASH_ON_EXIT:-1}"
 OPENCODE_LOOP_AUTOSTASH_INCLUDE_UNTRACKED="${OPENCODE_LOOP_AUTOSTASH_INCLUDE_UNTRACKED:-1}"
+OPENCODE_LOOP_GOAL="${OPENCODE_LOOP_GOAL:-}"
 
 if [[ ! -f "$OPENCODE_LOOP_PROMPT_FILE" ]]; then
   echo "Error: prompt file not found: $OPENCODE_LOOP_PROMPT_FILE" >&2
@@ -238,6 +240,10 @@ for i in $(seq 1 "$MAX_ITERS"); do
   iteration_prompt="$PROMPT_CONTENT"
   iteration_prompt+=$'\n\nRuntime budget context:\n'
   iteration_prompt+="- Driver iteration budget: $i/$MAX_ITERS (remaining: $((MAX_ITERS - i)))"
+  if [[ -n "${OPENCODE_LOOP_GOAL// }" ]]; then
+    iteration_prompt+=$'\n'
+    iteration_prompt+="- Iteration goal: $OPENCODE_LOOP_GOAL"
+  fi
 
   for attempt in $(seq 1 $((OPENCODE_LOOP_MISSING_STATUS_RETRIES + 1))); do
     attempt_log="$OPENCODE_LOOP_LOG_DIR/iter-$i-attempt-$attempt.log"

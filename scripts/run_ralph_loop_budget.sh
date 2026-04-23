@@ -1,9 +1,49 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MAX_ITERS="${1:-50}"
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/run_ralph_loop_budget.sh <goal>
+  scripts/run_ralph_loop_budget.sh <max_iterations> <goal>
+
+Examples:
+  scripts/run_ralph_loop_budget.sh "Build MVP from docs/design.md"
+  scripts/run_ralph_loop_budget.sh 20 "Implement billing reconciliation"
+
+Fail-fast:
+  Goal is mandatory. The script exits immediately when goal is missing.
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+MAX_ITERS=50
+GOAL=""
+
+if [[ $# -eq 0 ]]; then
+  echo "Error: goal is required." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ "$1" =~ ^[0-9]+$ ]]; then
+  MAX_ITERS="$1"
+  shift
+fi
+
 if ! [[ "$MAX_ITERS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERS" -lt 1 ]]; then
   echo "Error: max_iterations must be a positive integer." >&2
+  exit 1
+fi
+
+GOAL="$*"
+if [[ -z "${GOAL// }" ]]; then
+  echo "Error: goal is required." >&2
+  usage >&2
   exit 1
 fi
 
@@ -30,11 +70,13 @@ export OPENCODE_LOOP_AUTOSTASH_ON_EXIT="${OPENCODE_LOOP_AUTOSTASH_ON_EXIT:-1}"
 export OPENCODE_LOOP_AUTOSTASH_INCLUDE_UNTRACKED="${OPENCODE_LOOP_AUTOSTASH_INCLUDE_UNTRACKED:-1}"
 export OPENCODE_LOOP_PROMPT_FILE="${OPENCODE_LOOP_PROMPT_FILE:-$KIT_DIR/prompts/ralph_budget.md}"
 export OPENCODE_LOOP_LOG_DIR="${OPENCODE_LOOP_LOG_DIR:-.opencode-run-logs/$RUN_ID}"
+export OPENCODE_LOOP_GOAL="${OPENCODE_LOOP_GOAL:-$GOAL}"
 
 echo "Starting budget Ralph loop"
 echo "- max iterations: $MAX_ITERS"
 echo "- prompt file: $OPENCODE_LOOP_PROMPT_FILE"
 echo "- log dir: $OPENCODE_LOOP_LOG_DIR"
 echo "- validate command: $OPENCODE_LOOP_VALIDATE_CMD"
+echo "- goal: $OPENCODE_LOOP_GOAL"
 
 exec "$SCRIPT_DIR/run_ralph_loop.sh" "$MAX_ITERS"

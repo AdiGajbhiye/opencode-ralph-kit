@@ -55,16 +55,16 @@ opencode .
 /ralph-loop
 ```
 
-- Budgeted run (default 12 iterations):
+- Budgeted run (goal required):
 
 ```text
-/ralph-budget
+/ralph-budget Build MVP from docs/design.md
 ```
 
-- Budgeted run with explicit iterations:
+- Budgeted run with explicit iterations + goal:
 
 ```text
-/ralph-budget 20
+/ralph-budget 20 Build MVP from docs/design.md
 ```
 
 - Manual health check:
@@ -83,4 +83,5 @@ opencode .
 
 - Main logs are written inside the target repository under `.opencode-run-logs/`.
 - `/ralph-budget` is configured as a subtask command to reduce main-thread context pollution.
+- `/ralph-budget` fails fast if no goal is provided.
 - Use `/ralph-init` in a new project to scaffold local Ralph loop docs.
