@@ -51,6 +51,18 @@ source ~/.zshrc
 opencode .
 ```
 
+## Uninstall
+
+```bash
+cd ~/projects-running/opencode-ralph-kit
+./uninstall.sh --remove-shell-rc --remove-opencode-permissions
+```
+
+This removes:
+- `~/.config/opencode-ralph` symlink (or custom `OPENCODE_RALPH_TARGET_DIR`)
+- matching `OPENCODE_CONFIG_DIR` export line from your shell rc
+- Ralph-specific OpenCode permission allowlist rules
+
 ## Usage
 
 - One iteration:
